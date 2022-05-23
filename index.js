@@ -20,6 +20,9 @@ async function run() {
       await client.connect();
 
       const partscollection = client.db("dbtools").collection("parts");
+      const ordercollection = client.db("dbtools").collection("orders");
+      const usercollection = client.db("dbtools").collection("users");
+      const reviewcollection = client.db("dbtools").collection("reviews");
       
       console.log('inside connect');
 
@@ -42,6 +45,62 @@ async function run() {
       })
 
 
+
+      //order get api 
+
+      app.get('/orders',async(req,res)=>{
+        const email = req.query.email;
+        const query ={email : email}
+        const result = await ordercollection.find(query).toArray()
+        res.send(result)
+    })
+
+      //order post api 
+
+      app.post('/orders',async(req,res)=>{
+          const orderData=req.body;
+          const result = await ordercollection.insertOne(orderData)
+          res.send(result)
+      })
+
+      //orders delete api 
+      app.delete('/orders/:id',async(req,res)=>{
+        const id =req.params.id;
+        const query={_id:ObjectId(id)};
+        const result = await ordercollection.deleteOne(query);
+        res.send(result)
+      })
+
+
+
+      //user post api 
+      app.post('/users',async(req,res)=>{
+        const userData=req.body;
+        const result = await usercollection.insertOne(userData)
+        res.send(result)
+    })
+
+
+    //reviews put api
+    app.put('/reviews/:email',async(req,res)=>{
+      const email=req.params.email;
+      const filter = { email: email };
+      const reviewData = req.body;
+      const options = { upsert: true };
+
+      const updateDoc = {
+        $set: reviewData
+      };
+      const result = await reviewcollection.updateOne(filter, updateDoc, options);
+     
+      res.send(result)
+  })
+      // review get api
+      app.get('/reviews',async(req,res)=>{
+        
+        const result = await reviewcollection.find().toArray();
+        res.send(result)
+    })
 
 
     } 
