@@ -33,71 +33,117 @@ function verifyJWT(req, res, next) {
 }
 
 async function run() {
-    try {
-      await client.connect();
+  try {
+    await client.connect();
 
-      const partscollection = client.db("dbtools").collection("parts");
-      const ordercollection = client.db("dbtools").collection("orders");
-      const usercollection = client.db("dbtools").collection("users");
-      const reviewcollection = client.db("dbtools").collection("reviews");
-      
-      console.log('inside connect');
+    const partscollection = client.db("dbtools").collection("parts");
+    const ordercollection = client.db("dbtools").collection("orders");
+    const usercollection = client.db("dbtools").collection("users");
+    const reviewcollection = client.db("dbtools").collection("reviews");
 
-
-          // get all parts
-
-      app.get('/parts',async(req,res)=>{
-          const result = await partscollection.find().toArray()
-          res.send(result)
-      })
-        
-        // get one part
-      app.get('/parts/:id',async(req,res)=>{
-
-          const id = req.params.id
-          const query ={_id:ObjectId(id)}
-
-          const result = await partscollection.findOne(query)
-          res.send(result)
-      })
+    console.log('inside connect');
 
 
+    // get all parts
 
-      //order get api 
-
-      app.get('/orders',async(req,res)=>{
-        const email = req.query.email;
-        const query ={email : email}
-        const result = await ordercollection.find(query).toArray()
-        res.send(result)
+    app.get('/parts', async (req, res) => {
+      const result = await partscollection.find().toArray()
+      res.send(result)
     })
 
-      //order post api 
+    // get one part
+    app.get('/parts/:id', async (req, res) => {
 
-      app.post('/orders',async(req,res)=>{
-          const orderData=req.body;
-          const result = await ordercollection.insertOne(orderData)
-          res.send(result)
-      })
+      const id = req.params.id
+      const query = { _id: ObjectId(id) }
 
-      //orders delete api 
-      app.delete('/orders/:id',async(req,res)=>{
-        const id =req.params.id;
-        const query={_id:ObjectId(id)};
-        const result = await ordercollection.deleteOne(query);
-        res.send(result)
-      })
+      const result = await partscollection.findOne(query)
+      res.send(result)
+    })
+
+    //post api for parts
+
+    app.post('/parts', async (req, res) => {
+     
+      const products = req.body;
+      const result =await partscollection.insertOne(products)
+      res.send(result);
+
+    })
 
 
-      //user get api
 
-      app.get('/users',async(req,res)=>{
-        const result = await usercollection.find().toArray()
-        res.send(result)
-      })
-  
+    //order get api 
 
-      //user put api 
+    app.get('/orders', verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+      if (email === decodedEmail) {
+        const query = { email: email }
+        const result = await ordercollection.find(query).toArray()
+        return res.send(result)
+      }
+      else {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
+
+
+    })
+
+    //order post api 
+
+    app.post('/orders', async (req, res) => {
+      const orderData = req.body;
+      const result = await ordercollection.insertOne(orderData)
+      res.send(result)
+    })
+
+    //orders delete api 
+    app.delete('/orders/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await ordercollection.deleteOne(query);
+      res.send(result)
+    })
+
+
+    //user get api
+    app.get('/admin/:email', async (req, res) => {
+      const email = req.params.email;
+      const user = await usercollection.findOne({ email: email });
+      const isAdmin = user.role === 'admin';
+      res.send({ admin: isAdmin })
+    })
+
+    app.get('/users', async (req, res) => {
+      const result = await usercollection.find().toArray()
+      res.send(result)
+    })
+
+    
+
+
+    //make admin for users
+
+    app.put('/users/admin/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const initiator = req.decoded.email;
+      const requesterAccount = await usercollection.findOne({ email: initiator });
+      if (requesterAccount.role === 'admin') {
+        const filter = { email: email };
+        const updateDoc = {
+          $set: { role: 'admin' },
+        };
+        const result = await usercollection.updateOne(filter, updateDoc);
+        res.send(result);
+      }
+      else{
+        return res.status(403).send({ message: 'forbidden access' })
+      }
+
+    })
+
+    //user put api 
     app.put('/users/:email', async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -110,14 +156,14 @@ async function run() {
       const result = await usercollection.updateOne(filter, updateDoc, options);
       const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
       res.send({ result, token });
-    
+
     })
 
 
 
     //reviews put api
-    app.put('/reviews/:email',async(req,res)=>{
-      const email=req.params.email;
+    app.put('/reviews/:email', async (req, res) => {
+      const email = req.params.email;
       const filter = { email: email };
       const reviewData = req.body;
       const options = { upsert: true };
@@ -126,25 +172,25 @@ async function run() {
         $set: reviewData
       };
       const result = await reviewcollection.updateOne(filter, updateDoc, options);
-     
+
       res.send(result)
-  })
-      // review get api
-      app.get('/reviews',async(req,res)=>{
-        
-        const result = await reviewcollection.find().toArray();
-        res.send(result)
+    })
+    // review get api
+    app.get('/reviews', async (req, res) => {
+
+      const result = await reviewcollection.find().toArray();
+      res.send(result)
     })
 
 
-    } 
-    
-    finally {
-      
-      
-    }
   }
-  run().catch(console.dir);
+
+  finally {
+
+
+  }
+}
+run().catch(console.dir);
 
 
 
