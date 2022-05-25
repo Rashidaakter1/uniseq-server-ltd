@@ -41,9 +41,11 @@ async function run() {
     const ordercollection = client.db("dbtools").collection("orders");
     const usercollection = client.db("dbtools").collection("users");
     const reviewcollection = client.db("dbtools").collection("reviews");
+    const paymentcollection = client.db("dbtools").collection("payments");
 
     console.log('inside connect');
 
+    //api for payment intent
 
     app.post('/create-payment-intent', async(req, res) =>{
       const order = req.body;
@@ -86,6 +88,7 @@ async function run() {
     })
 
 
+    
 
     //order get api 
 
@@ -102,6 +105,22 @@ async function run() {
       }
 
 
+    })
+    //patch api for orders
+
+    app.patch('/orders/:id', verifyJWT, async(req, res) =>{
+      const id  = req.params.id;
+      const payment = req.body;
+      const filter = {_id: ObjectId(id)};
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId
+        }
+      }
+      const result = await paymentcollection.insertOne(payment);
+      const updatedOrder = await ordercollection.updateOne(filter, updatedDoc);
+      res.send(updatedOrder);
     })
 
     //order get api by id parameter
