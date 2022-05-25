@@ -90,6 +90,14 @@ async function run() {
 
     })
 
+    //order get api by id parameter
+    app.get('/orders/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query={_id: ObjectId(id)}
+      const result = await ordercollection.findOne(query)
+      res.send(result)
+    })
+
     //order post api 
 
     app.post('/orders', async (req, res) => {
