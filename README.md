@@ -1,6 +1,6 @@
-# UNISEQ COMPO SERVER
+#  UNISEQ TECH & ENGINEERING LTD SERVER
 
-Here the live website link [uniseq compo server](https://obscure-waters-19361.herokuapp.com/).
+
 
 ### Website Description
 This is a parts manufacturer website for Computer parts .
