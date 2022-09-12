@@ -42,6 +42,7 @@ async function run() {
     const usercollection = client.db("dbtools").collection("users");
     const reviewcollection = client.db("dbtools").collection("reviews");
     const paymentcollection = client.db("dbtools").collection("payments");
+    const audiocollection = client.db("dbtools").collection("audioTools");
 
     console.log('inside connect');
 
@@ -58,6 +59,13 @@ async function run() {
       });
       res.send({clientSecret: paymentIntent.client_secret})
     });
+
+
+    // audio 
+    app.get('/parts', async (req, res) => {
+      const result = await audiocollection.find().toArray()
+      res.send(result)
+    })
 
 
     // get all parts
@@ -86,6 +94,16 @@ async function run() {
       res.send(result);
 
     })
+    
+    //delete api for parts
+    app.delete('/parts/:id',async(req,res)=>{
+      const id = req.params.id
+      console.log(id);
+      const query = { _id: ObjectId(id) }
+      const result = await partscollection.deleteOne(query)
+      res.send(result)
+    })
+
 
 
     
