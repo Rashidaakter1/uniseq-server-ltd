@@ -62,7 +62,7 @@ async function run() {
 
 
     // audio 
-    app.get('/parts', async (req, res) => {
+    app.get('/tools', async (req, res) => {
       const result = await audiocollection.find().toArray()
       res.send(result)
     })
